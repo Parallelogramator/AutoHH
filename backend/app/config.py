@@ -3,12 +3,12 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     DATABASE_URL: str
-    GOOGLE_API_KEY: str # Заменили ключ
+    GOOGLE_API_KEY: str
     HH_API_TOKEN: str
     EMBED_INDEX_PATH: str = "/data/faiss_indices"
     AUTO_APPLY: bool = False
     REQUIRE_REVIEW: bool = True
-    RUN_MODE: str = "api" # 'api' or 'worker'
+    RUN_MODE: str = "api"  # 'api' or 'worker'
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
