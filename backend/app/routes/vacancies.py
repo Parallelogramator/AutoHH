@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
-from app.deps import get_db, get_current_user
-from app.models import User, Vacancy
+from app.deps import get_db
+from app.models import Vacancy
 from app.schemas.vacancy import VacancyOut
 from app.services.search_and_match import periodic_search_and_match
 
@@ -14,9 +14,9 @@ def get_vacancies(db: Session = Depends(get_db)):
     return vacancies
 
 @router.post("/refresh", summary="Принудительно запустить поиск и матчинг вакансий (для отладки)")
-async def refresh_vacancies(db: Session = Depends(get_db)):
+async def refresh_vacancies(background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     try:
-        await periodic_search_and_match(db)
-        return {"status": "ok", "message": "Search and match process finished."}
+        background_tasks.add_task(periodic_search_and_match, db)
+        return {"status": "ok", "message": "Search and match process started in the background."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

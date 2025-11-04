@@ -1,3 +1,5 @@
+import asyncio
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.db.session import SessionLocal
 from app.services.search_and_match import periodic_search_and_match
@@ -25,3 +27,19 @@ def stop_scheduler():
     if scheduler.running:
         scheduler.shutdown()
         print("Scheduler stopped.")
+
+
+async def main():
+    """Асинхронная основная функция для запуска планировщика."""
+    print("Starting worker...")
+    start_scheduler()
+    try:
+        while True:
+            await asyncio.sleep(3600)
+    except (KeyboardInterrupt, SystemExit):
+        pass
+    finally:
+        stop_scheduler()
+
+if __name__ == "__main__":
+    asyncio.run(main())

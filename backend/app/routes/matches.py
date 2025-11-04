@@ -1,12 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
-from app.deps import get_db, get_current_user
+from app.deps import get_db, get_current_user, get_hh_client
 from app.models import User, Match, Profile, Application
 from app.schemas.match import MatchOut, GeneratedContent
 from app.services import llm_chains, rag
 from app.config import get_settings
 from langchain_google_genai import ChatGoogleGenerativeAI
+from app.services.hh_client import HHClient
 
 router = APIRouter()
 
@@ -32,7 +33,7 @@ def generate_content(match_id: int, db: Session = Depends(get_db), current_user:
     retriever = vector_store.as_retriever()
     settings = get_settings()
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-latest",
+        model="gemini-1.5-flash-latest",
         google_api_key=settings.GOOGLE_API_KEY,
         temperature=0.3,
         convert_system_message_to_human=True
@@ -49,3 +50,33 @@ def generate_content(match_id: int, db: Session = Depends(get_db), current_user:
     })
 
     return GeneratedContent(cover_letter=cover_letter, resume_summary="Summary generation not implemented yet.")
+
+@router.post("/{match_id}/apply", summary="Откликнуться на вакансию")
+async def apply_to_vacancy(match_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user: User = Depends(get_current_user), hh_client: HHClient = Depends(get_hh_client)):
+    match = db.query(Match).filter(Match.id == match_id, Match.user_id == current_user.id).first()
+    if not match:
+        raise HTTPException(status_code=404, detail="Match not found")
+
+    # Здесь должна быть логика выбора резюме
+    resumes = await hh_client.get_my_resumes()
+    if not resumes.get("items"):
+        raise HTTPException(status_code=400, detail="No resumes found on HH.ru")
+    resume_id = resumes["items"][0]["id"]
+
+    # Генерация сопроводительного письма
+    generated_content = generate_content(match_id, db, current_user)
+
+    # Отправка отклика в фоновом режиме
+    background_tasks.add_task(hh_client.apply, match.vacancy.hh_id, resume_id, generated_content.cover_letter)
+
+    # Сохранение информации об отклике
+    application = Application(
+        match_id=match_id,
+        resume_id=resume_id,
+        cover_letter=generated_content.cover_letter
+    )
+    db.add(application)
+    match.status = "applied"
+    db.commit()
+
+    return {"message": "Application sent in the background"}

@@ -23,11 +23,11 @@
         ```bash
         docker-compose exec api alembic init migrations
         ```
-    *   Затем откройте файл `autohh/app/db/migrations/env.py`, найдите строку `target_metadata = None` и замените её на:
-        ```python
-        from app.models.base import Base
-        target_metadata = Base.metadata
-        ```
+    * Затем откройте файл `autohh/app/db/migrations/env.py`, найдите строку `target_metadata = None` и замените её на:
+      ```python
+      from backend.app.models.base import Base
+      target_metadata = Base.metadata
+      ```
     *   Создайте первую миграцию:
         ```bash
         docker-compose exec api alembic revision --autogenerate -m "Initial migration"

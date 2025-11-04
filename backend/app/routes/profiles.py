@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from app.deps import get_db, get_current_user
 from app.models import User, Profile
 from app.schemas.profile import ProfileIn, ProfileOut
-from typing import List
 
 router = APIRouter()
 

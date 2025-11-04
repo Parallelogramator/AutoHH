@@ -1,35 +1,55 @@
+version: '3.8'
+
 services:
+  # ------ FRONTEND SERVICE ------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80" # Мы обращаемся к Nginx на порт 3000
+    depends_on:
+      - api
+    restart: always
+
+  # ------ BACKEND API SERVICE ------
   api:
-    build: .
-    env_file: .env
+    build:
+      context: ./backend
+    env_file: ./backend/.env
     environment:
       - RUN_MODE=api
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - ./backend:/app
       - faiss_indices:/data/faiss_indices
     depends_on:
       db:
         condition: service_healthy
+    restart: always
 
+  # ------ BACKEND WORKER SERVICE ------
   worker:
-    build: .
-    command: python -c "from app.main import run_worker; run_worker()"
-    env_file: .env
+    build:
+      context: ./backend
+    command: python -m app.services.scheduler # Измененный способ запуска
+    env_file: ./backend/.env
     environment:
       - RUN_MODE=worker
     volumes:
-      - .:/app
+      - ./backend:/app
       - faiss_indices:/data/faiss_indices
     depends_on:
       db:
-        condition: service_healthy # Воркеру тоже нужна БД
+        condition: service_healthy
+    restart: always
 
+  # ------ DATABASE SERVICE ------
   db:
     image: postgres:15
     environment:
-      POSTGRES_USER: autohh
+      POSTG-RES_USER: autohh
       POSTGRES_PASSWORD: autohh
       POSTGRES_DB: autohh
     ports:
@@ -41,6 +61,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: always
 
 volumes:
   pgdata:

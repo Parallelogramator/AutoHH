@@ -3,7 +3,6 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.schema.runnable import Runnable
 from langchain.schema.output_parser import StrOutputParser
 from langchain.schema.retriever import BaseRetriever
-from app.config import Settings
 
 COVER_LETTER_PROMPT_TEMPLATE = """
 Ты — карьерный консультант и tech writer.
