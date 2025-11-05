@@ -9,11 +9,12 @@ class HHClient:
         self.headers = {"Authorization": f"Bearer {token}",
                         "User-Agent": "AutoHH/1.0 (daniil200307@outlook.com)"}
         self.client = httpx.AsyncClient(headers=self.headers, timeout=30.0)
+        self.client2 = httpx.AsyncClient(timeout=30.0)
 
     async def search_vacancies(self, text: str, area: int = 1, per_page: int = 50, page: int = 0) -> Dict:
         """Поиск вакансий. area=1 это Москва."""
         params = {"text": text, "area": area, "per_page": per_page, "page": page}
-        response = await self.client.get(f"{self.BASE_URL}/vacancies", params=params)
+        response = await self.client2.get(f"{self.BASE_URL}/vacancies", params=params)
         response.raise_for_status()
         return response.json()
 

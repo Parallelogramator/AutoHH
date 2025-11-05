@@ -23,7 +23,7 @@ async def periodic_search_and_match(db: Session):
 
         print(f"Processing user {user.id} with keywords: {profile.keywords}")
         hh_client = HHClient(token=user.hh_token)
-        search_query = " OR ".join(profile.keywords) if profile.keywords else "Python"
+        search_query = " ".join(profile.keywords) if profile.keywords else "Python"
 
         try:
             vacancies_data = await hh_client.search_vacancies(text=search_query)

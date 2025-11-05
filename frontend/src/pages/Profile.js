@@ -53,7 +53,7 @@ const Profile = () => {
     };
 
     try {
-      await apiClient.post('/profiles', payload);
+      await apiClient.post('/profiles/', payload);
       toast({
         title: 'Профиль сохранен.',
         status: 'success',
